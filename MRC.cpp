@@ -1,13 +1,4 @@
-//
-//  MRC.cpp
-//  
-//
-//  Created by salim sazzad on 1/25/18.
-//
-//
-
 #include <iostream>
-
 #include <fstream>
 #include <sstream>
 #include <math.h>
@@ -284,9 +275,9 @@ float calculateDistance (Coordinate coord1, Coordinate coord2) {
  */
 void MRC::getIndexFromCoordinate(float xCoord, int yCoord, float zCoord, Index &seedIndex)
 {
-    seedIndex.xIndex = ((xCoord - xOrigin)/ getApixX()) - nxStart ;
-    seedIndex.yIndex = ((yCoord - yOrigin)/ getApixY()) - nyStart ;
-    seedIndex.zIndex = ((zCoord - zOrigin)/ getApixZ()) - nzStart ;
+    seedIndex.xIndex = ((xCoord - xOrigin)/ getApixX()) - nxStart;
+    seedIndex.yIndex = ((yCoord - yOrigin)/ getApixY()) - nyStart;
+    seedIndex.zIndex = ((zCoord - zOrigin)/ getApixZ()) - nzStart;
 }
 
 /**
@@ -643,45 +634,94 @@ void MRC::writeInPDBFormat(string outputFile, vector<Coordinate> coordinates)
     printf("Writting to PDB format is complete\n");
 }
 
+void printDensityAtIndex(const Index& index, const MRC& mrc)
+{
+  int x = index.xIndex;
+  int y = index.yIndex;
+  int z = index.zIndex;
+
+  float density = mrc.cube[x][y][z];
+  /// string statement = "The density at point [" + xIndex + "][" + yIndex + "][" + zIndex + "] = ";
+  cout << "The density at point [" << x << "][" << y << "][" << z << "] = " << density << endl;
+}
+
+void printDensityAtIndex(float density, int x, int y, int z)
+{
+  cout << "The density at point [" << x << "][" << y << "][" << z << "] = " << density << endl;
+}
+
+void printAllDensitiesInCube(MRC& mrc)
+{
+  cout << "****************************************" << endl;
+  for(int i = 0; i < mrc.nz; i++)
+    {
+      for(int j = 0; j < mrc.ny; j++)
+	{
+	  for(int k = 0; k < mrc.nx; k++)
+	  {
+	    float density = mrc.cube[k][j][i];
+	    printDensityAtIndex(density, k, j, i);
+	    // cin.get();
+	  }
+	}
+    }
+  cout << "****************************************" << endl;
+}
+
+void printDensityAtIndexFromCoordinate(const Coordinate& coordinate, MRC& mrc)
+{
+
+}
+
+#pragma mark - Destructor
+MRC::~MRC()
+{
+  for(int i = 0; i < nx; i++)
+    for(int j = 0; j < ny; j++)
+      {
+	delete [] cube[i][j];
+      }
+
+  for(int i = 0; i < nx; i++)
+    delete [] cube[i];
+
+  delete [] cube;
+}
+
 int main(int argc, char** argv)
 {
   string inputMrcFilePath = (std::string)argv[1];
   string inputCmmFilePath = (std::string)argv[2];
   vector<Coordinate> seeds;
   // Z:\win_user_profile\Downloads\All Averaged + Orginial Map-20190131T140815Z-001\Averaged_Original
-	MRC mrc;	
+  MRC mrc;	
 	
-	mrc.readMRCFile(inputMrcFilePath);
-	mrc.readCoordinateFromCMMFile(seeds, inputCmmFilePath);
-	cout << "Size of Seeds: " << seeds.size() << endl;
-
-	return 0;
+  mrc.readMRCFile(inputMrcFilePath);
+  mrc.readCoordinateFromCMMFile(seeds, inputCmmFilePath);
+  cout << "Size of Seeds: " << seeds.size() << endl;
+  cout << "The number of columns along the fast x-axis of the 3D data array cube is " << mrc.nx << endl
+       << "The number of rows along the medium-speed y-axis of the 3D data array cube is " << mrc.ny << endl
+       << "The number of sections along the slow z-axis of the 3D data array cube is " << mrc.nz << endl;
+  // printAllDensitiesInCube(mrc);
+  // Practice with conversion of coordinates to cube indices and access of seed point density data of each filament.
+  vector<Coordinate>::iterator sitr = seeds.begin();
+  Index testIndex;
+  while(sitr != seeds.end())
+    {
+      mrc.getIndexFromCoordinate((float)(*sitr).xCor, (*sitr).yCor, (float)(*sitr).zCor, testIndex);
+      cout << "Coordinate Values: " << endl
+	   << "X: " << (*sitr).xCor << endl
+	   << "Y: " << (*sitr).yCor << endl
+	   << "Z: " << (*sitr).zCor << endl << endl;
+      cout << "Corrsponding Index Values: " << endl
+	   << "X: " << testIndex.xIndex << endl
+	   << "Y: " << testIndex.yIndex << endl
+	   << "Z: " << testIndex.zIndex << endl << endl;
+      printDensityAtIndex(testIndex, mrc);
+      
+      sitr++;
+      cin.get();
+    }
+  
+  return 0;
 }
-
-void printDensityAtIndex(const Index& index, const MRC& mrc)
-{
-	int x = index.xIndex;
-	int y = index.yIndex;
-	int z = index.zIndex;
-
-	float density = mrc.cube[x][y][z];
-	/// string statement = "The density at point [" + xIndex + "][" + yIndex + "][" + zIndex + "] = ";
-	cout << "The density at point [" << x << "][" << y << "][" << z << "] = " << density << endl;
-}
-
-#pragma mark - Destructor
-MRC::~MRC()
-{
-    for(int i = 0; i < nx; i++)
-        for(int j = 0; j < ny; j++)
-        {
-            delete [] cube[i][j];
-        }
-    
-    for(int i = 0; i < nx; i++)
-        delete [] cube[i];
-    
-    delete [] cube;
-}
-
-
