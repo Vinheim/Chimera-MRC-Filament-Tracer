@@ -692,9 +692,9 @@ float MRC::getCellA2() const
 void MRC::printVoxelSize() const
 {
 	cout << "Voxel Size: " << endl;
-	cout << "CELLA[0]/mx = " << xLength << " angstroms" << endl
-		 << "CELLA[1]/my = " << yLength << " angstroms" << endl
-		 << "CELLA[2]/mz = " << zLength << " angstroms" << endl;
+	cout << "CELLA[0]/mx = " << xLength << " angstroms on X" << endl
+		 << "CELLA[1]/my = " << yLength << " angstroms on Y" << endl
+		 << "CELLA[2]/mz = " << zLength << " angstroms on Z" << endl;
 }
 
 #pragma mark - Destructor
