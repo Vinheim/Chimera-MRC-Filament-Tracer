@@ -714,23 +714,24 @@ MRC::~MRC()
 
 int main(int argc, char** argv)
 {
-  string inputMrcFilePath = (std::string)argv[1];
-  string inputCmmFilePath = (std::string)argv[2];
-  vector<Coordinate> seeds;
-  // Z:\win_user_profile\Downloads\All Averaged + Orginial Map-20190131T140815Z-001\Averaged_Original
-  MRC mrc;	
-	
-  mrc.readMRCFile(inputMrcFilePath);
-  mrc.readCoordinateFromCMMFile(seeds, inputCmmFilePath);
-  cout << "Size of Seeds: " << seeds.size() << endl;
-  cout << "The number of columns along the fast x-axis of the 3D data array cube is " << mrc.nx << endl
-       << "The number of rows along the medium-speed y-axis of the 3D data array cube is " << mrc.ny << endl
-       << "The number of sections along the slow z-axis of the 3D data array cube is " << mrc.nz << endl;
-  // printAllDensitiesInCube(mrc);
-  // Practice with conversion of coordinates to cube indices and access of seed point density data of each filament.
-  vector<Coordinate>::iterator sitr = seeds.begin();
-  Index testIndex;
-  while(sitr != seeds.end())
+    string inputMrcFilePath = (std::string)argv[1];
+    string inputCmmFilePath = (std::string)argv[2];
+    vector<Coordinate> seeds;
+    // Z:\win_user_profile\Downloads\All Averaged + Orginial Map-20190131T140815Z-001\Averaged_Original
+    MRC mrc;	
+
+    mrc.readMRCFile(inputMrcFilePath);
+    mrc.readCoordinateFromCMMFile(seeds, inputCmmFilePath);
+    cout << "Size of Seeds: " << seeds.size() << endl;
+    cout << "The number of columns along the fast x-axis of the 3D data array cube is " << mrc.nx << endl
+         << "The number of rows along the medium-speed y-axis of the 3D data array cube is " << mrc.ny << endl
+         << "The number of sections along the slow z-axis of the 3D data array cube is " << mrc.nz << endl;
+    // printAllDensitiesInCube(mrc);
+    // 
+    // Practice with conversion of coordinates to cube indices and access of seed point density data of each filament.
+    vector<Coordinate>::iterator sitr = seeds.begin();
+    Index testIndex;
+    while(sitr != seeds.end())
     {
       mrc.getIndexFromCoordinate((float)(*sitr).xCor, (*sitr).yCor, (float)(*sitr).zCor, testIndex);
       cout << "Coordinate Values: " << endl
@@ -748,5 +749,5 @@ int main(int argc, char** argv)
 	}
 
 	mrc.printVoxelSize();
-	return 0;
+    return 0;
 }
