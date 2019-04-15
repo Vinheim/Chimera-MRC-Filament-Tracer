@@ -727,25 +727,26 @@ int main(int argc, char** argv)
          << "The number of rows along the medium-speed y-axis of the 3D data array cube is " << mrc.ny << endl
          << "The number of sections along the slow z-axis of the 3D data array cube is " << mrc.nz << endl;
     // printAllDensitiesInCube(mrc);
-    // 
+    // Practice with writing to files of type .pdb so as to gain experience necessary for CS595 Python Assignment.
+    writeInPDBFormat("seeds.pdb", seeds);
     // Practice with conversion of coordinates to cube indices and access of seed point density data of each filament.
     vector<Coordinate>::iterator sitr = seeds.begin();
     Index testIndex;
     while(sitr != seeds.end())
     {
-      mrc.getIndexFromCoordinate((float)(*sitr).xCor, (*sitr).yCor, (float)(*sitr).zCor, testIndex);
-      cout << "Coordinate Values: " << endl
-	   << "X: " << (*sitr).xCor << endl
-	   << "Y: " << (*sitr).yCor << endl
-	   << "Z: " << (*sitr).zCor << endl << endl;
-      cout << "Corrsponding Index Values: " << endl
-	   << "X: " << testIndex.xIndex << endl
-	   << "Y: " << testIndex.yIndex << endl
-	   << "Z: " << testIndex.zIndex << endl << endl;
-      printDensityAtIndex(testIndex, mrc);
-      
-      sitr++;
-      cin.get();
+        mrc.getIndexFromCoordinate((float)(*sitr).xCor, (*sitr).yCor, (float)(*sitr).zCor, testIndex);
+        cout << "Coordinate Values: " << endl
+	         << "X: " << (*sitr).xCor << endl
+	         << "Y: " << (*sitr).yCor << endl
+	         << "Z: " << (*sitr).zCor << endl << endl;
+        cout << "Corrsponding Index Values: " << endl
+	         << "X: " << testIndex.xIndex << endl
+	         << "Y: " << testIndex.yIndex << endl
+	         << "Z: " << testIndex.zIndex << endl << endl;
+        printDensityAtIndex(testIndex, mrc);
+
+        sitr++;
+        cin.get();
 	}
 
 	mrc.printVoxelSize();
