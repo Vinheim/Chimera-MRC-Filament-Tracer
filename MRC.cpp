@@ -691,10 +691,13 @@ float MRC::getCellA2() const
 
 void MRC::printVoxelSize() const
 {
-	cout << "Voxel Size: " << endl;
-	cout << "CELLA[0]/mx = " << xLength << " angstroms on X" << endl
-		 << "CELLA[1]/my = " << yLength << " angstroms on Y" << endl
-		 << "CELLA[2]/mz = " << zLength << " angstroms on Z" << endl;
+	float xVoxelSize = xLength / mx;
+    float yVoxelSize = yLength / my;
+    float zVoxelSize = zLength / mz;    
+    cout << "Voxel Size: " << endl;
+    cout << "CELLA[0]/mx = " << xLength << "/" << mx << " = " << xVoxelSize << " angstroms on X" << endl
+         << "CELLA[1]/my = " << yLength << "/" << my << " = " << yVoxelSize << " angstroms on Y" << endl
+         << "CELLA[2]/mz = " << zLength << "/" << mz << " = " << zVoxelSize << " angstroms on Z" << endl;
 }
 
 #pragma mark - Destructor
@@ -727,8 +730,13 @@ int main(int argc, char** argv)
          << "The number of rows along the medium-speed y-axis of the 3D data array cube is " << mrc.ny << endl
          << "The number of sections along the slow z-axis of the 3D data array cube is " << mrc.nz << endl;
     // printAllDensitiesInCube(mrc);
+    
     // Practice with writing to files of type .pdb so as to gain experience necessary for CS595 Python Assignment.
-    writeInPDBFormat("seeds.pdb", seeds);
+    // writeInPDBFormat("seeds.pdb", seeds);
+    
+    // Practice with reading of, access of, printing of, and conversion of voxel values to angstrom units along each axis.
+    mrc.printVoxelSize();
+
     // Practice with conversion of coordinates to cube indices and access of seed point density data of each filament.
     vector<Coordinate>::iterator sitr = seeds.begin();
     Index testIndex;
@@ -749,6 +757,5 @@ int main(int argc, char** argv)
         cin.get();
 	}
 
-	mrc.printVoxelSize();
     return 0;
 }
