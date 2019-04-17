@@ -635,13 +635,13 @@ void MRC::writeInPDBFormat(string outputFile, vector<Coordinate> coordinates)
     printf("Writting to PDB format is complete\n");
 }
 
-void printDensityAtIndex(const Index& index, const MRC& mrc)
+void MRC::printDensityAtIndex(const Index& index)
 {
   int x = index.xIndex;
   int y = index.yIndex;
   int z = index.zIndex;
 
-  float density = mrc.cube[x][y][z];
+  float density = cube[x][y][z];
   /// string statement = "The density at point [" + xIndex + "][" + yIndex + "][" + zIndex + "] = ";
   cout << "The density at point [" << x << "][" << y << "][" << z << "] = " << density << endl;
 }
@@ -751,11 +751,11 @@ int main(int argc, char** argv)
 	         << "X: " << testIndex.xIndex << endl
 	         << "Y: " << testIndex.yIndex << endl
 	         << "Z: " << testIndex.zIndex << endl << endl;
-        printDensityAtIndex(testIndex, mrc);
+	mrc.printDensityAtIndex(testIndex);
 
         sitr++;
         cin.get();
-	}
+    }
 
     return 0;
 }

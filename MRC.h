@@ -249,11 +249,14 @@ public:
     void readNSortFilamentFromCMM(string filename, vector<Coordinate> &filament);
     void readCoordinateFromCMMFile(vector<Coordinate> &seeds,string inputFilename);
     
-	// Get voxel size
-	float getCellA0() const; // Returns xLength portion of cell dimensions in angstroms
-	float getCellA1() const; // Returns yLength portion of cell dimensions in angstroms
-	float getCellA2() const; // Returns zLength portion of cell dimensions in angstroms
-	void printVoxelSize() const; // Print total cell dimensions, measured in angstroms, along each axis 
+    // Pring density values at a specified index of the cube. 
+    void printDensityAtIndex(const Index& index);
+    
+    // Get voxel size
+    float getCellA0() const; // Returns xLength portion of cell dimensions in angstroms
+    float getCellA1() const; // Returns yLength portion of cell dimensions in angstroms
+    float getCellA2() const; // Returns zLength portion of cell dimensions in angstroms
+    void printVoxelSize() const; // Print total cell dimensions, measured in angstroms, along each axis 
 
     ~MRC();
  
