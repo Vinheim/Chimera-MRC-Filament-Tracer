@@ -235,14 +235,12 @@ public:
     
     void retraceFilament(Index voxel, Index startVoxel, Index endVoxel,  vector <Coordinate> &denseVoxels, int offsetXLeft, int offsetXRight, int numOfIteration);
     
-    void retracingStep2();
-    
-    
+    void retracingStep2();    
+	
     //Other
     void averageDensityAlongZ(Index index, float &avgDensity);
     void markFirstFilamentOfPlane();
 
-    
     //Read/write
     void writeDataInCMMFormatWithColor(string outputFile, vector<Coordinate> coordinates, string filamentName,int filamentId, RGBColor rgbColor);
     void writeIntersectionDataInCMMFormat(string outputFile, vector<Coordinate> coordinates, string filamentName);
@@ -257,7 +255,10 @@ public:
     float getCellA1() const; // Returns yLength portion of cell dimensions in angstroms
     float getCellA2() const; // Returns zLength portion of cell dimensions in angstroms
     void printVoxelSize() const; // Print total cell dimensions, measured in angstroms, along each axis 
-
+	float getVoxelSize() const;
+	int convertAngstromsToVoxels(float angstromDistance, float voxelSizeInAngstroms) const;
+	
+	
     ~MRC();
  
     void normalizeDensity();

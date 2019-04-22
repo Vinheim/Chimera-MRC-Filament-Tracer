@@ -656,15 +656,15 @@ void printAllDensitiesInCube(MRC& mrc)
   cout << "****************************************" << endl;
   for(int i = 0; i < mrc.nz; i++)
     {
-      for(int j = 0; j < mrc.ny; j++)
-	{
-	  for(int k = 0; k < mrc.nx; k++)
-	  {
-	    float density = mrc.cube[k][j][i];
-	    printDensityAtIndex(density, k, j, i);
-	    // cin.get();
-	  }
-	}
+		for(int j = 0; j < mrc.ny; j++)
+		{
+			for(int k = 0; k < mrc.nx; k++)
+			{
+				float density = mrc.cube[k][j][i];
+				printDensityAtIndex(density, k, j, i);
+				// cin.get();
+			}
+		}
     }
   cout << "****************************************" << endl;
 }
@@ -698,6 +698,26 @@ void MRC::printVoxelSize() const
     cout << "CELLA[0]/mx = " << xLength << "/" << mx << " = " << xVoxelSize << " angstroms on X" << endl
          << "CELLA[1]/my = " << yLength << "/" << my << " = " << yVoxelSize << " angstroms on Y" << endl
          << "CELLA[2]/mz = " << zLength << "/" << mz << " = " << zVoxelSize << " angstroms on Z" << endl;
+}
+
+int MRC::getVoxelSize() const
+{
+	float xVoxelSize = xLength / mx;
+	float yVoxelSize = yLength / my;
+	float zVoxelSize = zLength / mz;
+	if(xVoxelSize == yVoxelSize && xVoxelSize == zVoxelSize && yVoxelSize == zVoxelSize)
+	{
+		float generalVoxelSize = xVoxelSize;
+		return generalVoxelSize;
+	}
+	
+	return 0;
+}
+
+int MRC::convertAngstromsToVoxels(float angstromDistance, float voxelSizeInAngstroms) const
+{
+	int numVoxels = angstromDistance % voxelSizeInAngstroms;
+	return numVoxels;
 }
 
 #pragma mark - Destructor
@@ -736,7 +756,8 @@ int main(int argc, char** argv)
     
     // Practice with reading of, access of, printing of, and conversion of voxel values to angstrom units along each axis.
     mrc.printVoxelSize();
-
+	float voxelSize = mrc.getVoxelSize();
+	
     // Practice with conversion of coordinates to cube indices and access of seed point density data of each filament.
     vector<Coordinate>::iterator sitr = seeds.begin();
     Index testIndex;
@@ -747,15 +768,26 @@ int main(int argc, char** argv)
 	         << "X: " << (*sitr).xCor << endl
 	         << "Y: " << (*sitr).yCor << endl
 	         << "Z: " << (*sitr).zCor << endl << endl;
-        cout << "Corrsponding Index Values: " << endl
+        cout << "Corresponding Index Values: " << endl
 	         << "X: " << testIndex.xIndex << endl
 	         << "Y: " << testIndex.yIndex << endl
 	         << "Z: " << testIndex.zIndex << endl << endl;
-	mrc.printDensityAtIndex(testIndex);
-
+		mrc.printDensityAtIndex(testIndex);
+	
         sitr++;
         cin.get();
     }
+
+	for(int i = 0; i < seeds.size() - 1; i++)
+	{
+		float filamentDistance = calculateDistance(seeds.at(i), seeds.at(i+1));
+		float densityRadius = filamentDistance / 2;
+		int voxelRadius = convertAngstromsToVoxels(densityRadius, mrc.getVoxelSize());
+		
+		cout << "Distance between coordinate " << i << " and coordinate " << i+1 << ": " << filamentDistance << endl
+			 << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
+			 << "Voxel Radius: " << voxelRadius << endl << endl;
+	}
 
     return 0;
 }
