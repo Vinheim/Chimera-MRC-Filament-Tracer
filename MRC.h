@@ -255,8 +255,8 @@ public:
     float getCellA1() const; // Returns yLength portion of cell dimensions in angstroms
     float getCellA2() const; // Returns zLength portion of cell dimensions in angstroms
     void printVoxelSize() const; // Print total cell dimensions, measured in angstroms, along each axis 
-	float getVoxelSize() const;
-	int convertAngstromsToVoxels(float angstromDistance, float voxelSizeInAngstroms) const;
+	int getVoxelSize() const;
+	int convertAngstromsToVoxels(float angstromDistance) const;
 	
 	
     ~MRC();

@@ -714,9 +714,9 @@ int MRC::getVoxelSize() const
 	return 0;
 }
 
-int MRC::convertAngstromsToVoxels(float angstromDistance, float voxelSizeInAngstroms) const
+int MRC::convertAngstromsToVoxels(float angstromDistance) const
 {
-	int numVoxels = angstromDistance % voxelSizeInAngstroms;
+	int numVoxels = angstromDistance / this->getVoxelSize();
 	return numVoxels;
 }
 
@@ -778,12 +778,17 @@ int main(int argc, char** argv)
         cin.get();
     }
 
-	for(int i = 0; i < seeds.size() - 1; i++)
+    int numCoords = seeds.size();
+	for(int i = 0; i < numCoords; i++)
 	{
-		float filamentDistance = calculateDistance(seeds.at(i), seeds.at(i+1));
-		float densityRadius = filamentDistance / 2;
-		int voxelRadius = convertAngstromsToVoxels(densityRadius, mrc.getVoxelSize());
+		float filamentDistance = 0;
+		if(i != numCoords - 1)
+			float filamentDistance = calculateDistance(seeds.at(i), seeds.at(i+1));
+		else
+			float filamentDistance = calculateDistance(seeds.at(i-1), seeds.at(i));
 		
+		float densityRadius = filamentDistance / 2;
+		int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
 		cout << "Distance between coordinate " << i << " and coordinate " << i+1 << ": " << filamentDistance << endl
 			 << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
 			 << "Voxel Radius: " << voxelRadius << endl << endl;
