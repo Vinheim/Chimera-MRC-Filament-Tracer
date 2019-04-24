@@ -700,7 +700,7 @@ void MRC::printVoxelSize() const
          << "CELLA[2]/mz = " << zLength << "/" << mz << " = " << zVoxelSize << " angstroms on Z" << endl;
 }
 
-int MRC::getVoxelSize() const
+float MRC::getVoxelSize() const
 {
 	float xVoxelSize = xLength / mx;
 	float yVoxelSize = yLength / my;
@@ -711,12 +711,12 @@ int MRC::getVoxelSize() const
 		return generalVoxelSize;
 	}
 	
-	return 0;
+	return xVoxelSize;
 }
 
 int MRC::convertAngstromsToVoxels(float angstromDistance) const
 {
-	int numVoxels = angstromDistance / this->getVoxelSize();
+  int numVoxels = (int)(angstromDistance / this->getVoxelSize());
 	return numVoxels;
 }
 
@@ -779,13 +779,13 @@ int main(int argc, char** argv)
     }
 
     int numCoords = seeds.size();
-	for(int i = 0; i < numCoords; i++)
+	for(int i = 0; i < numCoords - 1; i++)
 	{
 		float filamentDistance = 0;
 		if(i != numCoords - 1)
-			float filamentDistance = calculateDistance(seeds.at(i), seeds.at(i+1));
+			filamentDistance = calculateDistance(seeds.at(i), seeds.at(i+1));
 		else
-			float filamentDistance = calculateDistance(seeds.at(i-1), seeds.at(i));
+		        filamentDistance = calculateDistance(seeds.at(i-1), seeds.at(i));
 		
 		float densityRadius = filamentDistance / 2;
 		int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
