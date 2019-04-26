@@ -716,8 +716,10 @@ float MRC::getVoxelSize() const
 
 int MRC::convertAngstromsToVoxels(float angstromDistance) const
 {
-  int numVoxels = (int)(angstromDistance / this->getVoxelSize());
-	return numVoxels;
+  float numVoxels = (angstromDistance / this->getVoxelSize());
+	cout << "float version: " << numVoxels;
+    numVoxels = (int)numVoxels;
+    return numVoxels;
 }
 
 #pragma mark - Destructor
@@ -782,11 +784,6 @@ int main(int argc, char** argv)
 	for(int i = 0; i < numCoords - 1; i++)
 	{
 		float filamentDistance = 0;
-		if(i != numCoords - 1)
-			filamentDistance = calculateDistance(seeds.at(i), seeds.at(i+1));
-		else
-		        filamentDistance = calculateDistance(seeds.at(i-1), seeds.at(i));
-		
 		float densityRadius = filamentDistance / 2;
 		int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
 		cout << "Distance between coordinate " << i << " and coordinate " << i+1 << ": " << filamentDistance << endl
