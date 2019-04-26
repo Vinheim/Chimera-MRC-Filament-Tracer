@@ -716,9 +716,11 @@ float MRC::getVoxelSize() const
 
 int MRC::convertAngstromsToVoxels(float angstromDistance) const
 {
-  float numVoxels = (angstromDistance / this->getVoxelSize());
-	cout << "float version: " << numVoxels;
-    numVoxels = (int)numVoxels;
+	// Add a value of 0.5 for use in symmetric rounding when casting float to int.
+  	float numVoxels = (angstromDistance / this->getVoxelSize());
+	cout << "Floating-Point Real Value: " << numVoxels << endl;
+	numVoxels += 0.5;
+    numVoxels = static_cast<int>(numVoxels);
     return numVoxels;
 }
 
@@ -766,6 +768,7 @@ int main(int argc, char** argv)
     while(sitr != seeds.end())
     {
         mrc.getIndexFromCoordinate((float)(*sitr).xCor, (*sitr).yCor, (float)(*sitr).zCor, testIndex);
+        /*
         cout << "Coordinate Values: " << endl
 	         << "X: " << (*sitr).xCor << endl
 	         << "Y: " << (*sitr).yCor << endl
@@ -775,15 +778,15 @@ int main(int argc, char** argv)
 	         << "Y: " << testIndex.yIndex << endl
 	         << "Z: " << testIndex.zIndex << endl << endl;
 		mrc.printDensityAtIndex(testIndex);
-	
+		*/
         sitr++;
-        cin.get();
+        //cin.get();
     }
 
     int numCoords = seeds.size();
 	for(int i = 0; i < numCoords - 1; i++)
 	{
-		float filamentDistance = 0;
+		float filamentDistance = calculateDistance(seeds.at(i), seeds.at(i+1));
 		float densityRadius = filamentDistance / 2;
 		int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
 		cout << "Distance between coordinate " << i << " and coordinate " << i+1 << ": " << filamentDistance << endl
