@@ -58,6 +58,7 @@ for line in inFile:
 inFile.seek(0)
 for line in inFile:
 	if "HELIX" in line or "SHEET" in line:
+		print(line, sep = '', end = "")
 		print(line, sep = '', end = "", file = outFile)
 
 inFile.seek(0)
@@ -73,21 +74,19 @@ for line in inFile:
 		initial = int(line[21:25])
 		terminal = int(line[33:37])
 		# print(int(initial), int(terminal))
-		atoms.append(initial)
-		atoms.append(terminal)
 
-		print(lineNumber, ": ", line, sep = '', end = "")
+		# print(line, sep = '', end = "")
 		# print(line, sep = '', end = "", file = outFile)
 
 		# Print atoms to the output file which have a residue number within the range [initial, terminal]
 		for atom in totalAtoms:
 			residueSequenceNumber = int(atom[22:26])
-			if residueSequenceNumber >= initial and residueSequenceNumber <= terminal:
+			if residueSequenceNumber >= initial and residueSequenceNumber <= terminal and atom not in atoms:
 				# print(residueSequenceNumber, initial, terminal)
 				atomCount += 1
 				print(atom, sep = '', end = "")
 				print(atom, sep = '', end = "", file = outFile)
-
+				atoms.append(atom)
 	elif "SHEET" in line:
 		lineNumber += 1
 		sheetCount += 1
@@ -99,29 +98,27 @@ for line in inFile:
 		initial = int(line[22:26])
 		terminal = int(line[33:37])
 		# print(int(initial), int(terminal))
-		atoms.append(initial)
-		atoms.append(terminal)
 
-		print(lineNumber, ": ", line, sep = '', end = "")
+		# print(line, sep = '', end = "")
 		# print(line, sep = '', end = "", file = outFile)
 
 		# Print atoms to the output file which have a residue number within the range [initial, terminal]
 		# Print atoms to the output file which have a residue number within the range [initial, terminal]
 		for atom in totalAtoms:
 			residueSequenceNumber = int(atom[22:26])
-			if residueSequenceNumber >= initial and residueSequenceNumber <= terminal:
+			if residueSequenceNumber >= initial and residueSequenceNumber <= terminal and atom not in atoms:
 				# print(residueSequenceNumber, initial, terminal)
 				atomCount += 1
 				print(atom, sep = '', end = "")
 				print(atom, sep = '', end = "", file = outFile)
-	
+				atoms.append(atom)
 	else:
 		lineNumber += 1
 
 structureCount = helixCount + sheetCount
 print("")
-print("Base Atoms List:", atoms)
-print("Total Atoms: ", len(atoms))
+# print("Base Atoms List:", atoms)
+# print("Total Atoms: ", len(atoms))
 # print("Individual Atom List:", atom)
 
 """
