@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <vector>
 #include <string>
-
+#include <iostream>
 
 using namespace std;
 
@@ -13,14 +13,19 @@ struct Coordinate{
     float yCor;
     float zCor;
     
-    Coordinate(){
+    Coordinate()
+    {
     }
-    
-    
+        
     Coordinate(float x, float y, float z){
         xCor = x;
         yCor = y;
         zCor = z;
+    }
+
+    friend ostream& operator<<(ostream& outs, const Coordinate& C)
+    {
+        outs << "x = " << C.x << " ; y = " << C.y << " ; z = " << C.z << endl;
     }
 };
 

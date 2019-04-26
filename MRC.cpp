@@ -739,14 +739,8 @@ MRC::~MRC()
   delete [] cube;
 }
 
-int main(int argc, char** argv)
+void readMRCandSeeds(MRC mrc)
 {
-    string inputMrcFilePath = (std::string)argv[1];
-    string inputCmmFilePath = (std::string)argv[2];
-    vector<Coordinate> seeds;
-    // Z:\win_user_profile\Downloads\All Averaged + Orginial Map-20190131T140815Z-001\Averaged_Original
-    MRC mrc;	
-
     mrc.readMRCFile(inputMrcFilePath);
     mrc.readCoordinateFromCMMFile(seeds, inputCmmFilePath);
     cout << "Size of Seeds: " << seeds.size() << endl;
@@ -757,31 +751,47 @@ int main(int argc, char** argv)
     
     // Practice with writing to files of type .pdb so as to gain experience necessary for CS595 Python Assignment.
     // writeInPDBFormat("seeds.pdb", seeds);
-    
-    // Practice with reading of, access of, printing of, and conversion of voxel values to angstrom units along each axis.
-    mrc.printVoxelSize();
-	float voxelSize = mrc.getVoxelSize();
-	
+}
+
+void convertCoordinatesToIndices(MRC mrc, vector<Coordinate> seeds)
+{
     // Practice with conversion of coordinates to cube indices and access of seed point density data of each filament.
     vector<Coordinate>::iterator sitr = seeds.begin();
     Index testIndex;
     while(sitr != seeds.end())
     {
         mrc.getIndexFromCoordinate((float)(*sitr).xCor, (*sitr).yCor, (float)(*sitr).zCor, testIndex);
-        /*
         cout << "Coordinate Values: " << endl
-	         << "X: " << (*sitr).xCor << endl
-	         << "Y: " << (*sitr).yCor << endl
-	         << "Z: " << (*sitr).zCor << endl << endl;
+             << "X: " << (*sitr).xCor << endl
+             << "Y: " << (*sitr).yCor << endl
+             << "Z: " << (*sitr).zCor << endl << endl;
         cout << "Corresponding Index Values: " << endl
-	         << "X: " << testIndex.xIndex << endl
-	         << "Y: " << testIndex.yIndex << endl
-	         << "Z: " << testIndex.zIndex << endl << endl;
-		mrc.printDensityAtIndex(testIndex);
-		*/
+             << "X: " << testIndex.xIndex << endl
+             << "Y: " << testIndex.yIndex << endl
+             << "Z: " << testIndex.zIndex << endl << endl;
+        mrc.printDensityAtIndex(testIndex);
+        
         sitr++;
-        //cin.get();
+        cin.get();
     }
+}
+
+int main(int argc, char** argv)
+{
+    string inputMrcFilePath = (std::string)argv[1];
+    string inputCmmFilePath = (std::string)argv[2];
+    vector<Coordinate> seeds;
+    MRC mrc;
+    
+    // Read input MRC file and associated Coordinate seeds.
+    readMRCandSeeds(mrc);
+
+    // Practice with reading of, access of, printing of, and conversion of voxel values to angstrom units along each axis.
+    mrc.printVoxelSize();
+	float voxelSize = mrc.getVoxelSize();
+
+    // Convert seed Coordinate values to corresponding Index values and print results.
+    convertCoordinatesToIndices(mrc, seeds);
 
     int numCoords = seeds.size();
 	for(int i = 0; i < numCoords - 1; i++)
@@ -793,6 +803,20 @@ int main(int argc, char** argv)
 			 << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
 			 << "Voxel Radius: " << voxelRadius << endl << endl;
 	}
+
+    string filamentName;
+    cout << "Enter example filament name: ";
+    cin >> filamentName;
+    cout << endl;
+
+    vector<Coordinate> filament;
+    mrc.readCoordinateFromCMMFile(filament, filamentName);
+    int c = 0;
+    for(vector<Coordinate>::iterator fitr = filament.begin(); fitr != filament.end(); fitr++)
+    {
+        cout << (*fitr);
+        c++;
+    }
 
     return 0;
 }
