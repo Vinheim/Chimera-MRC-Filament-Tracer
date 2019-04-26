@@ -41,20 +41,18 @@ lineNumber = 1
 
 # List atoms contains the residue sequence number ranges of all atoms which comprise an alpha helix or beta sheet
 atoms = []
-# List atom contains the individual sequence number of every initial or terminal that has no partner not already found in atoms.
+# List atom contains the individual sequence number of every initial or terminal that has no partner not already found in atoms
 # atom = []
 line = inFile.readline()
 
-# First search through output file for all lines with atom that are composed of EXACTLY 80 character "columns", then store every one of such lines in a list for initialization
+# Store all lines containing string "ATOM" into a list for use in search and comparison of atom residue sequence number to alpha helix/beta sheet [initial, terminal] residue sequence range
 totalAtoms = []
 for line in inFile:
 	if "ATOM" in line and "REMARK" not in line:
 		totalAtoms.append(line)
 		#print(line, end="")
 
-# for i, val in enumerate(totalAtoms):
-#	print(val, end="")
-
+# Before search for and printing of atoms within protein secondary structure residue sequence range, search inFile for all instances of "HELIX" and "SHEET" and print those lines first to standard output and the outFile
 inFile.seek(0)
 for line in inFile:
 	if "HELIX" in line or "SHEET" in line:
