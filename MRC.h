@@ -25,7 +25,8 @@ struct Coordinate{
 
     friend ostream& operator<<(ostream& outs, const Coordinate& C)
     {
-        outs << "x = " << C.x << " ; y = " << C.y << " ; z = " << C.z << endl;
+        outs << "x = " << C.xCor << " ; y = " << C.yCor << " ; z = " << C.zCor << endl;
+	return outs;
     }
 };
 
@@ -262,7 +263,9 @@ public:
     void printVoxelSize() const; // Print total cell dimensions, measured in angstroms, along each axis 
     float getVoxelSize() const;
     int convertAngstromsToVoxels(float angstromDistance) const;
-	
+  void readMRCandSeeds(string inputMrcFilePath, string inputCmmFilePath, vector<Coordinate>& seeds);
+  void convertCoordinatesToIndices(vector<Coordinate> seeds);
+  
     ~MRC();
  
     void normalizeDensity();

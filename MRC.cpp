@@ -739,28 +739,28 @@ MRC::~MRC()
   delete [] cube;
 }
 
-void readMRCandSeeds(MRC mrc)
+void MRC::readMRCandSeeds(string inputMrcFilePath, string inputCmmFilePath, vector<Coordinate>& seeds)
 {
-    mrc.readMRCFile(inputMrcFilePath);
-    mrc.readCoordinateFromCMMFile(seeds, inputCmmFilePath);
+    this->readMRCFile(inputMrcFilePath);
+    this->readCoordinateFromCMMFile(seeds, inputCmmFilePath);
     cout << "Size of Seeds: " << seeds.size() << endl;
-    cout << "The number of columns along the fast x-axis of the 3D data array cube is " << mrc.nx << endl
-         << "The number of rows along the medium-speed y-axis of the 3D data array cube is " << mrc.ny << endl
-         << "The number of sections along the slow z-axis of the 3D data array cube is " << mrc.nz << endl;
+    cout << "The number of columns along the fast x-axis of the 3D data array cube is " << this->nx << endl
+         << "The number of rows along the medium-speed y-axis of the 3D data array cube is " << this->ny << endl
+         << "The number of sections along the slow z-axis of the 3D data array cube is " << this->nz << endl;
     // printAllDensitiesInCube(mrc);
     
     // Practice with writing to files of type .pdb so as to gain experience necessary for CS595 Python Assignment.
     // writeInPDBFormat("seeds.pdb", seeds);
 }
 
-void convertCoordinatesToIndices(MRC mrc, vector<Coordinate> seeds)
+void MRC::convertCoordinatesToIndices(vector<Coordinate> seeds)
 {
     // Practice with conversion of coordinates to cube indices and access of seed point density data of each filament.
     vector<Coordinate>::iterator sitr = seeds.begin();
     Index testIndex;
     while(sitr != seeds.end())
     {
-        mrc.getIndexFromCoordinate((float)(*sitr).xCor, (*sitr).yCor, (float)(*sitr).zCor, testIndex);
+        this->getIndexFromCoordinate((float)(*sitr).xCor, (*sitr).yCor, (float)(*sitr).zCor, testIndex);
         cout << "Coordinate Values: " << endl
              << "X: " << (*sitr).xCor << endl
              << "Y: " << (*sitr).yCor << endl
@@ -769,7 +769,7 @@ void convertCoordinatesToIndices(MRC mrc, vector<Coordinate> seeds)
              << "X: " << testIndex.xIndex << endl
              << "Y: " << testIndex.yIndex << endl
              << "Z: " << testIndex.zIndex << endl << endl;
-        mrc.printDensityAtIndex(testIndex);
+        this->printDensityAtIndex(testIndex);
         
         sitr++;
         cin.get();
@@ -784,14 +784,14 @@ int main(int argc, char** argv)
     MRC mrc;
     
     // Read input MRC file and associated Coordinate seeds.
-    readMRCandSeeds(mrc);
+    mrc.readMRCandSeeds(inputMrcFilePath, inputCmmFilePath, seeds);
 
     // Practice with reading of, access of, printing of, and conversion of voxel values to angstrom units along each axis.
     mrc.printVoxelSize();
-	float voxelSize = mrc.getVoxelSize();
+    float voxelSize = mrc.getVoxelSize();
 
     // Convert seed Coordinate values to corresponding Index values and print results.
-    convertCoordinatesToIndices(mrc, seeds);
+    // mrc.convertCoordinatesToIndices(seeds);
 
     int numCoords = seeds.size();
 	for(int i = 0; i < numCoords - 1; i++)
@@ -817,6 +817,20 @@ int main(int argc, char** argv)
         cout << (*fitr);
         c++;
     }
+    
+    /**
+     * Thinking this through: What do I need to do from here?
+     * First, what can I do already?
+     * - Access density values at any point on cube
+     * - Convert coordinate values to cube index equivalents
+     * - Read filament data from marker cmm file
+     * - Calculate the distance between two coordinates, derive desired radius value from this, and convert the radius distance in angstroms to the voxel equivalent integer
+     * Second, what do I do from here?
+     * - Use voxel radius equivalent as number of indices to move in all dimensions, x, y, and z, in order to take the average of all densities in the resulting cube
+     * - Take average density of entire cube and use as minimal boundary value for the average densities of cube minors
+     * - If average cube minor density < boundary -> set marker at current coordinate value to determine terminal point of current filament, and begin examination of following filament
+     * - Read filaments from output folder by incrementing integer to append to file name string before opening filament file of current loop iteration
+     */
 
     return 0;
 }
