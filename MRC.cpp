@@ -826,11 +826,74 @@ int main(int argc, char** argv)
      * - Read filament data from marker cmm file
      * - Calculate the distance between two coordinates, derive desired radius value from this, and convert the radius distance in angstroms to the voxel equivalent integer
      * Second, what do I do from here?
-     * - Use voxel radius equivalent as number of indices to move in all dimensions, x, y, and z, in order to take the average of all densities in the resulting cube
+     * - Use voxel radius equivalent as number of indices to move in all dimensions, x, y, and z, in order to create a "cube minor" from which to take the average of all densities in the radius
      * - Take average density of entire cube and use as minimal boundary value for the average densities of cube minors
      * - If average cube minor density < boundary -> set marker at current coordinate value to determine terminal point of current filament, and begin examination of following filament
      * - Read filaments from output folder by incrementing integer to append to file name string before opening filament file of current loop iteration
+     * - Vector of vectors of coordinates to represent all traced filaments? vector<vector<Coordinate>> 
      */
 
     return 0;
 }
+
+/**
+#pragma mark - ReadNTrace Filament
+void MRC::readSeedPointsNTraceFilaments(string seedPointsFilename)
+{
+    vector<Coordinate> seedpoints;
+
+    readCoordinateFromCMMFile(seedpoints, seedPointsFilename);
+    sort(seedpoints.begin(), seedpoints.end(), sortBasedOnZCoord);
+
+    numberOfFilament =   (int)seedpoints.size();
+
+    int firstOnZ = 0;
+    int lastOnZ;
+
+    cout<<"Sorting Seed Points...."<<endl;
+    cout<<"-------------------------------------------"<<endl;
+    isFirstFilemantOnPlane[0] = true;
+    for (int i = 1; i < numberOfFilament; i++) {
+        isFirstFilemantOnPlane[i] = false;
+        if (fabs(seedpoints.at(i).zCor -  seedpoints.at(i - 1).zCor) > getApixZ() * 8){
+            lastOnZ = i - 1;
+            cout<<"Seed Plane: "<<firstOnZ<< " " <<lastOnZ << endl;
+            sort(seedpoints.begin() + firstOnZ, seedpoints.begin() + lastOnZ + 1, sortBasedOnXCoord);
+            firstOnZ = i;
+            isFirstFilemantOnPlane[i] = true;
+        }
+    }
+
+    sort(seedpoints.begin() + firstOnZ, seedpoints.begin() + numberOfFilament, sortBasedOnXCoord);
+
+     if (filamentDirection == Ascending) {
+         mrcEndY =  ny - 1;//2000;
+     }
+     else {
+         mrcEndY = 1;//  90;
+     }
+    cout<<"-------------------------------------------"<<endl;
+
+    cout<<"\nTracing start........."<<endl;
+    cout<<"Phase 1: tracing using only density"<<endl;
+
+    traceFilamentsWithStepSize(seedpoints, 2);
+    int overlappingSegments2 = getNumberOfOverlappingSegments();
+    //printf("Overlapping Segments for shift of 2: %d\n", overlappingSegments2);
+  // readAndCalculateAccuracy();
+
+    traceFilamentsWithStepSize(seedpoints, 3);
+    int overlappingSegments3 = getNumberOfOverlappingSegments();
+   // printf("Overlapping Segments forshift of 3: %d\n", overlappingSegments3);
+  //  readAndCalculateAccuracy();
+
+    if (overlappingSegments2 < overlappingSegments3) {
+       // printf("Selecting Best x shift");
+        traceFilamentsWithStepSize(seedpoints, 2);
+    }
+
+
+   // readAndCalculateAccuracy();
+    cout<<"Phase-1 completed"<<endl<<endl;
+}
+**/
