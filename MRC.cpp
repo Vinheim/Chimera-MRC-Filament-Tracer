@@ -803,25 +803,37 @@ int main(int argc, char** argv)
 			 << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
 			 << "Voxel Radius: " << voxelRadius << endl << endl;
 	}
-
-    string filamentName;
+    
+    /**
+    string filamentExample;
     cout << "Enter example filament name: ";
-    cin >> filamentName;
+    cin >> filamentExample;
     cout << endl;
-
-    vector<Coordinate> filament;
-    mrc.readCoordinateFromCMMFile(filament, filamentName);
+    
+    mrc.readCoordinateFromCMMFile(filament, filamentExample);
     int c = 0;
     for(vector<Coordinate>::iterator fitr = filament.begin(); fitr != filament.end(); fitr++)
     {
         cout << (*fitr);
         c++;
     }
-    
+    */
+
+
+
+    vector<Coordinate> filament;
+    vector<vector<Coordinate>> filaments;
+    for(int i = 0; i < seeds.size(); i++) // One filament per starting seed point
+    {
+        string filamentName = "~/git/Chimera_MRC_Filament_Tracer/Output/finals_filament_smoothed/filament_smoothed_" + to_string(i) + ".cmm";
+        mrc.readCoordinateFromCMMFile(filaments.at(i), filamentName);
+        cout << "Graphing next filament from coordinates..." << endl;
+    }
+
     /**
      * Thinking this through: What do I need to do from here?
      * First, what can I do already?
-     * - Access density values at any point on cube
+     * - Access density values at any point and index on cube
      * - Convert coordinate values to cube index equivalents
      * - Read filament data from marker cmm file
      * - Calculate the distance between two coordinates, derive desired radius value from this, and convert the radius distance in angstroms to the voxel equivalent integer
