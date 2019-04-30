@@ -819,15 +819,19 @@ int main(int argc, char** argv)
     }
     */
 
-
-
     vector<Coordinate> filament;
-    vector<vector<Coordinate>> filaments;
-    for(int i = 0; i < seeds.size(); i++) // One filament per starting seed point
+    vector<vector<Coordinate>> filaments(seeds.size()); // One filament per starting seed point, so filaments gets size seeds.size()
+    int i = 0;
+    for(vector<vector<Coordinate>>::iterator fitr = filaments.begin(); fitr != filaments.end(); fitr++) 
     {
-        string filamentName = "~/git/Chimera_MRC_Filament_Tracer/Output/finals_filament_smoothed/filament_smoothed_" + to_string(i) + ".cmm";
+        string filamentName = "/home/jhessefo/git/MRC/Chimera_MRC_Filament_Tracer/Output/finals_filament_smoothed/filament_smoothed_" + to_string(i) + ".cmm";
         mrc.readCoordinateFromCMMFile(filaments.at(i), filamentName);
-        cout << "Graphing next filament from coordinates..." << endl;
+        
+        cout << endl << "Graphing coordinates of filament " << i << "..." << endl;
+        for(vector<Coordinate>::iterator citr = filaments[i].begin(); citr != filaments[i].end(); citr++) // iterate through each filament in filaments and print coordinate of the filament
+        	cout << (*citr);
+
+    	i++;
     }
 
     /**
