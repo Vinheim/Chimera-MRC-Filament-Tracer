@@ -263,10 +263,13 @@ float calculateDistance (Coordinate coord1, Coordinate coord2) {
     float xDistance = (coord1.xCor - coord2.xCor);
     xDistance *= xDistance;
     
+    float yDistance = (coord1.yCor - coord2.yCor);
+    yDistance *= yDistance;
+
     float zDistance = (coord1.zCor - coord2.zCor);
     zDistance *= zDistance;
     
-    return  sqrtf(xDistance + zDistance);
+    return  sqrtf(xDistance + yDistance + zDistance);
 }
 
 #pragma mark- Index/Coordinate
@@ -825,45 +828,46 @@ int main(int argc, char** argv)
 
     // Test: Measure average density along a single filament within voxel radius and with each measure check to see if average density has dropped below mean
     double meanDensity = mrc.meanDensity();
-    int j = 0;
-    for(vector<Coordinate>::iterator citr = filaments[1].begin(); citr < filaments[1].end() - 1; citr++)
+    int numCoords = filaments.at(1).size();
+    vector<Coordinate>::iterator citr = filaments.at(1).begin();
+    for(int j = 0; j < numCoords - 1; j++)
+      {
+	cout << "Coordinate " << j << ": " << filaments.at(1).at(j)
+	     << "Coordinate " << j+1 << ": " << filaments.at(1).at(j+1);
+	float filamentDistance = calculateDistance(filaments.at(1).at(j), filaments.at(1).at(j+1));
+	float densityRadius = filamentDistance / 2;
+	int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
+	cout << "Distance between coordinate " << j << " and coordinate " << j+1  << ": " << filamentDistance << endl
+	     << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
+             << "Voxel Radius Equivalent: " << voxelRadius << endl << endl;
+
+	Index testIndex;
+	mrc.getIndexFromCoordinate((float)filaments.at(1).at(j).xCor, filaments.at(1).at(j).yCor,(float)filaments.at(1).at(j).zCor, testIndex); 
+	double totalDensity = 0;
+        for(int z = 0; z < voxelRadius; z++)
+	  {
+	    for(int y = 0; y < voxelRadius; y++)
+	      {
+		for(int x = 0; x < voxelRadius; x++)
+		  {
+		    totalDensity += mrc.cube[testIndex.xIndex + x][testIndex.yIndex + y][testIndex.zIndex + z];
+		    totalDensity += mrc.cube[testIndex.xIndex - x][testIndex.yIndex - y][testIndex.zIndex - z];
+		  }
+	      }
+	  }
+       float averageDensity = (float) totalDensity / (pow((voxelRadius * voxelRadius * voxelRadius), 2)); // Dimensions multiplied then squared to account for multi-directional forward/backward accumulation of densities
+       cout << "Average Density: " << averageDensity;
+  if(averageDensity < meanDensity)
     {
-    	float filamentDistance = calculateDistance((*citr), (*(citr++)));
-    	float densityRadius = filamentDistance / 2;
-    	int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
-    	cout << "Distance between coordinate " << j << " and coordinate " << j + 1 << ": " << filamentDistance << endl
-    		 << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
-    		 << "Voxel Radius Equivalent: " << voxelRadius << endl << endl;
-
-   		Index testIndex;
-    	mrc.getIndexFromCoordinate((float)(*citr).xCor, (*citr).yCor, (float)(*citr).yCor, testIndex);
-    	cout << testIndex;
-
-    	double totalDensity = 0;
-    	for(int z = 0; z < voxelRadius; z++)
-    	{
-    		for(int y = 0; y < voxelRadius; y++)
-    		{
-    			for(int x = 0; x < voxelRadius; x++)
-    			{
-    				totalDensity += mrc.cube[testIndex.xIndex + x][testIndex.yIndex + y][testIndex.zIndex + z];
-    				totalDensity += mrc.cube[testIndex.xIndex - x][testIndex.yIndex - y][testIndex.zIndex - z];
-    			}
-    		}
-    	}
-    	float averageDensity = (float) totalDensity / (pow((voxelRadius * voxelRadius * voxelRadius), 2)); // Dimensions multiplied then squared to account for multi-directional forward/backward accumulation of densities
-    	cout << averageDensity << endl;
-   		
-   		if(averageDensity < meanDensity)
-   		{
-   			filaments[1].erase(citr, filaments[1].end());
-   			cout << "Final marking point of this filament: Marker (" << j << "): " << (*citr);
-   		}
-   		j++;
+      cout << "Well, it looks like " << averageDensity << " is smaller than " << meanDensity << ", so it seems we can determine precise termination is here at Coordinate " << j << endl;
+      filaments[1].erase(citr, filaments[1].end());
+      cout << "Final marking point of this filament: Marker (" << j << "): " << (*citr);
+      break;
     }
-
-    /**
-    int numCoords = seeds.size();
+  citr++;
+ }
+	/**	
+   	int numCoords = seeds.size();
 	for(int i = 0; i < numCoords - 1; i++)
 	{
 		float filamentDistance = calculateDistance(seeds.at(i), seeds.at(i+1));
