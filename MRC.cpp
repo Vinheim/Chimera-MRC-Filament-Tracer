@@ -723,8 +723,8 @@ int MRC::convertAngstromsToVoxels(float angstromDistance) const
   	float numVoxels = (angstromDistance / this->getVoxelSize());
 	cout << "Floating-Point Real Value: " << numVoxels << endl;
 	numVoxels += 0.5;
-    numVoxels = static_cast<int>(numVoxels);
-    return numVoxels;
+	numVoxels = static_cast<int>(numVoxels);
+	return numVoxels;
 }
 
 #pragma mark - Destructor
@@ -839,10 +839,11 @@ int main(int argc, char** argv)
 	int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
 	cout << "Distance between coordinate " << j << " and coordinate " << j+1  << ": " << filamentDistance << endl
 	     << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
-             << "Voxel Radius Equivalent: " << voxelRadius << endl << endl;
+             << "Voxel Radius Equivalent: " << voxelRadius << endl;
 
 	Index testIndex;
 	mrc.getIndexFromCoordinate((float)filaments.at(1).at(j).xCor, filaments.at(1).at(j).yCor,(float)filaments.at(1).at(j).zCor, testIndex); 
+	cout << "Corresponding Cube Indices: " << testIndex;
 	double totalDensity = 0;
         for(int z = 0; z < voxelRadius; z++)
 	  {
@@ -850,13 +851,18 @@ int main(int argc, char** argv)
 	      {
 		for(int x = 0; x < voxelRadius; x++)
 		  {
-		    totalDensity += mrc.cube[testIndex.xIndex + x][testIndex.yIndex + y][testIndex.zIndex + z];
-		    totalDensity += mrc.cube[testIndex.xIndex - x][testIndex.yIndex - y][testIndex.zIndex - z];
-		  }
+		    /*
+		    if(testIndex.xIndex + x <= mrc.nx && testIndex.yIndex + y <= mrc.ny && testIndex.zIndex + z <= mrc.nz)
+		      {
+			totalDensity += mrc.cube[testIndex.xIndex + x][testIndex.yIndex + y][testIndex.zIndex + z];
+		      }
+		    */
+		    //totalDensity += mrc.cube[testIndex.xIndex - x][testIndex.yIndex - y][testIndex.zIndex - z];
+		 }
 	      }
 	  }
-       float averageDensity = (float) totalDensity / (pow((voxelRadius * voxelRadius * voxelRadius), 2)); // Dimensions multiplied then squared to account for multi-directional forward/backward accumulation of densities
-       cout << "Average Density: " << averageDensity;
+	float averageDensity = (float) totalDensity / (voxelRadius * voxelRadius * voxelRadius); // Dimensions multiplied then squared to account for multi-directional forward/backward accumulation of densities
+       cout << "Average Density: " << averageDensity << endl << endl;
   if(averageDensity < meanDensity)
     {
       cout << "Well, it looks like " << averageDensity << " is smaller than " << meanDensity << ", so it seems we can determine precise termination is here at Coordinate " << j << endl;
