@@ -44,6 +44,10 @@ struct Index{
         zIndex = z;
     }
     
+    friend ostream& operator<<(ostream& outs, const Index& I)
+    {
+        outs << "x = " << I.xIndex << " ; y = " << I.yIndex << " ; z = " << I.zIndex << endl;
+    }
 };
 
 struct RGBColor{
