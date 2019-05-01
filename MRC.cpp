@@ -792,17 +792,6 @@ int main(int argc, char** argv)
 
     // Convert seed Coordinate values to corresponding Index values and print results.
     // mrc.convertCoordinatesToIndices(seeds);
-
-    int numCoords = seeds.size();
-	for(int i = 0; i < numCoords - 1; i++)
-	{
-		float filamentDistance = calculateDistance(seeds.at(i), seeds.at(i+1));
-		float densityRadius = filamentDistance / 2;
-		int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
-		cout << "Distance between coordinate " << i << " and coordinate " << i+1 << ": " << filamentDistance << endl
-			 << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
-			 << "Voxel Radius: " << voxelRadius << endl << endl;
-	}
     
     /**
     string filamentExample;
@@ -819,6 +808,7 @@ int main(int argc, char** argv)
     }
     */
 
+    // Load all existing filaments into vector collection for pruning of unnecessary coordinates
     vector<Coordinate> filament;
     vector<vector<Coordinate>> filaments(seeds.size()); // One filament per starting seed point, so filaments gets size seeds.size()
     int i = 0;
@@ -827,12 +817,63 @@ int main(int argc, char** argv)
         string filamentName = "/home/jhessefo/git/MRC/Chimera_MRC_Filament_Tracer/Output/finals_filament_smoothed/filament_smoothed_" + to_string(i) + ".cmm";
         mrc.readCoordinateFromCMMFile(filaments.at(i), filamentName);
         
-        cout << endl << "Graphing coordinates of filament " << i << "..." << endl;
+        cout << endl << "Grabbing coordinates of filament " << i << "..." << endl;
         for(vector<Coordinate>::iterator citr = filaments[i].begin(); citr != filaments[i].end(); citr++) // iterate through each filament in filaments and print coordinate of the filament
         	cout << (*citr);
-
     	i++;
     }
+
+    // Test: Measure average density along a single filament within voxel radius and with each measure check to see if average density has dropped below mean
+    double meanDensity = mrc.meanDensity();
+    int j = 0;
+    for(vector<Coordinate>::iterator citr = filaments[1].begin(); citr < filaments[1].end() - 1; citr++)
+    {
+    	float filamentDistance = calculateDistance((*citr), (*(citr++)));
+    	float densityRadius = filamentDistance / 2;
+    	int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
+    	cout << "Distance between coordinate " << j << " and coordinate " << j + 1 << ": " << filamentDistance << endl
+    		 << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
+    		 << "Voxel Radius Equivalent: " << voxelRadius << endl << endl;
+
+   		Index testIndex;
+    	mrc.getIndexFromCoordinate((float)(*citr).xCor, (*citr).yCor, (float)(*citr).yCor, testIndex);
+    	cout << testIndex;
+
+    	double totalDensity = 0;
+    	for(int z = 0; z < voxelRadius; z++)
+    	{
+    		for(int y = 0; y < voxelRadius; y++)
+    		{
+    			for(int x = 0; x < voxelRadius; x++)
+    			{
+    				totalDensity += mrc.cube[testIndex.xIndex + x][testIndex.yIndex + y][testIndex.zIndex + z];
+    				totalDensity += mrc.cube[testIndex.xIndex - x][testIndex.yIndex - y][testIndex.zIndex - z];
+    			}
+    		}
+    	}
+    	float averageDensity = (float) totalDensity / (pow((voxelRadius * voxelRadius * voxelRadius), 2)); // Dimensions multiplied then squared to account for multi-directional forward/backward accumulation of densities
+    	cout << averageDensity << endl;
+   		
+   		if(averageDensity < meanDensity)
+   		{
+   			filaments[1].erase(citr, filaments[1].end());
+   			cout << "Final marking point of this filament: Marker (" << j << "): " << (*citr);
+   		}
+   		j++;
+    }
+
+    /**
+    int numCoords = seeds.size();
+	for(int i = 0; i < numCoords - 1; i++)
+	{
+		float filamentDistance = calculateDistance(seeds.at(i), seeds.at(i+1));
+		float densityRadius = filamentDistance / 2;
+		int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
+		cout << "Distance between coordinate " << i << " and coordinate " << i+1 << ": " << filamentDistance << endl
+			 << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
+			 << "Voxel Radius Equivalent: " << voxelRadius << endl << endl;
+	}
+	*/
 
     /**
      * Thinking this through: What do I need to do from here?
