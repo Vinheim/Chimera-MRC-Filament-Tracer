@@ -2,7 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <math.h>
+#include <cmath>
 #include <iomanip>
 #include <algorithm>
 #include "MRC.h"
@@ -828,6 +828,7 @@ int main(int argc, char** argv)
 
     // Test: Measure average density along a single filament within voxel radius and with each measure check to see if average density has dropped below mean
     double meanDensity = mrc.meanDensity();
+    // meanDensity = abs(meanDensity);
     int numCoords = filaments.at(1).size();
     vector<Coordinate>::iterator citr = filaments.at(1).begin();
     for(int j = 0; j < numCoords - 1; j++)
@@ -851,21 +852,21 @@ int main(int argc, char** argv)
 	      {
 		for(int x = 0; x < voxelRadius; x++)
 		  {
-		    /*
-		    if(testIndex.xIndex + x <= mrc.nx && testIndex.yIndex + y <= mrc.ny && testIndex.zIndex + z <= mrc.nz)
+		    if(testIndex.xIndex + x < mrc.nx && testIndex.yIndex + y < mrc.ny && testIndex.zIndex + z < mrc.nz)
 		      {
 			totalDensity += mrc.cube[testIndex.xIndex + x][testIndex.yIndex + y][testIndex.zIndex + z];
+			// cout << "totalDensity = " << totalDensity << endl;
 		      }
-		    */
 		    //totalDensity += mrc.cube[testIndex.xIndex - x][testIndex.yIndex - y][testIndex.zIndex - z];
 		 }
 	      }
 	  }
 	float averageDensity = (float) totalDensity / (voxelRadius * voxelRadius * voxelRadius); // Dimensions multiplied then squared to account for multi-directional forward/backward accumulation of densities
-       cout << "Average Density: " << averageDensity << endl << endl;
-  if(averageDensity < meanDensity)
+	// averageDensity = abs(averageDensity);
+	cout << "Average Density: " << averageDensity << endl << endl;
+  if(averageDensity > meanDensity)
     {
-      cout << "Well, it looks like " << averageDensity << " is smaller than " << meanDensity << ", so it seems we can determine precise termination is here at Coordinate " << j << endl;
+      cout << "Well, it looks like " << averageDensity << " is greater than " << meanDensity << ", so it seems we can determine precise termination is here at Coordinate " << j << endl;
       filaments[1].erase(citr, filaments[1].end());
       cout << "Final marking point of this filament: Marker (" << j << "): " << (*citr);
       break;
