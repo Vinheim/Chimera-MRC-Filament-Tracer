@@ -1,3 +1,7 @@
+/**
+ * UPDATE: Update filament cube minor average density calculator to skip the first coordinate pair (0,1) for all filaments, as very few of said regions have density > globalAverage.
+ *
+ */
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -253,7 +257,7 @@ float MRC:: meanDensity()
         }
     }
     
-    float mDensity = (float) totalDensity / (nz * ny * nx);
+    float mDensity = abs((float) totalDensity / (nz * ny * nx));
     cout<<"Mean Density: " <<mDensity << endl;
     return mDensity;
 }
@@ -825,54 +829,70 @@ int main(int argc, char** argv)
         	cout << (*citr);
     	i++;
     }
-
+  
     // Test: Measure average density along a single filament within voxel radius and with each measure check to see if average density has dropped below mean
     double meanDensity = mrc.meanDensity();
-    // meanDensity = abs(meanDensity);
-    int numCoords = filaments.at(1).size();
-    vector<Coordinate>::iterator citr = filaments.at(1).begin();
-    for(int j = 0; j < numCoords - 1; j++)
+    vector<vector<Coordinate>>::iterator fitr = filaments.begin();
+    while(fitr != filaments.end())
       {
-	cout << "Coordinate " << j << ": " << filaments.at(1).at(j)
-	     << "Coordinate " << j+1 << ": " << filaments.at(1).at(j+1);
-	float filamentDistance = calculateDistance(filaments.at(1).at(j), filaments.at(1).at(j+1));
-	float densityRadius = filamentDistance / 2;
-	int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
-	cout << "Distance between coordinate " << j << " and coordinate " << j+1  << ": " << filamentDistance << endl
-	     << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
-             << "Voxel Radius Equivalent: " << voxelRadius << endl;
-
-	Index testIndex;
-	mrc.getIndexFromCoordinate((float)filaments.at(1).at(j).xCor, filaments.at(1).at(j).yCor,(float)filaments.at(1).at(j).zCor, testIndex); 
-	cout << "Corresponding Cube Indices: " << testIndex;
-	double totalDensity = 0;
-        for(int z = 0; z < voxelRadius; z++)
+	int numCoords = (*fitr).size();
+	vector<Coordinate>::iterator citr = (*fitr).begin();
+	
+	for(int j = 0; j < numCoords - 1; j++)
 	  {
-	    for(int y = 0; y < voxelRadius; y++)
+	    cout << "Coordinate " << j << ": " << (*fitr).at(j)
+		 << "Coordinate " << j+1 << ": " << (*fitr).at(j+1);
+	    float filamentDistance = calculateDistance((*fitr).at(j), (*fitr).at(j+1));
+	    float densityRadius = filamentDistance / 2;
+	    int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
+	    cout << "Distance between coordinate " << j << " and coordinate " << j+1  << ": " << filamentDistance << endl
+		 << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
+		 << "Voxel Radius Equivalent: " << voxelRadius << endl;
+	    
+	    Index testIndex;
+	    mrc.getIndexFromCoordinate((float)(*fitr).at(j).xCor, (*fitr).at(j).yCor,(float)(*fitr).at(j).zCor, testIndex); 
+	    cout << "Corresponding Cube Indices: " << testIndex;
+	    double totalDensity = 0;
+	    for(int z = 0; z < voxelRadius; z++)
 	      {
-		for(int x = 0; x < voxelRadius; x++)
+		for(int y = 0; y < voxelRadius; y++)
 		  {
-		    if(testIndex.xIndex + x < mrc.nx && testIndex.yIndex + y < mrc.ny && testIndex.zIndex + z < mrc.nz)
+		    for(int x = 0; x < voxelRadius; x++)
 		      {
-			totalDensity += mrc.cube[testIndex.xIndex + x][testIndex.yIndex + y][testIndex.zIndex + z];
-			// cout << "totalDensity = " << totalDensity << endl;
+			// Traverse "forward" through the cube minor region and add density values as accessed.
+			if(testIndex.xIndex + x < mrc.nx && testIndex.yIndex + y < mrc.ny && testIndex.zIndex + z < mrc.nz)
+			  {
+			    totalDensity += mrc.cube[testIndex.xIndex + x][testIndex.yIndex + y][testIndex.zIndex + z];
+			    // cout << "totalDensity = " << totalDensity << endl;
+			  }
+			// Traverse "backward" through the cube minor region and add density values as accessed.
+			if(testIndex.xIndex - x > 0 && testIndex.yIndex - y > 0 && testIndex.zIndex - z > 0)
+			  {
+			    totalDensity += mrc.cube[testIndex.xIndex - x][testIndex.yIndex - y][testIndex.zIndex - z];
+			  }
+			else
+			  {
+			    totalDensity *= 2;
+			  }
+			
 		      }
-		    //totalDensity += mrc.cube[testIndex.xIndex - x][testIndex.yIndex - y][testIndex.zIndex - z];
-		 }
+		  }
 	      }
+	    float averageDensity = abs((float) totalDensity / (voxelRadius * voxelRadius * voxelRadius * voxelRadius)); // Dimensions multiplied then squared to account for multi-directional forward/backward accumulation of densities
+	    // averageDensity = abs(averageDensity);
+	    cout << "Average Density: " << averageDensity << endl << endl;
+	    if(averageDensity < meanDensity)
+	      {
+		cout << "Well, it looks like this cube minor's density, " << averageDensity << ", is less than the sum cube's mean density, " << meanDensity << ", so it seems we can determine precise termination is here at Coordinate " << j << endl;
+		(*fitr).erase(citr, (*fitr).end());
+		cout << "Final marking point of this filament: Marker (" << j << "): " << (*citr);
+		break;
+	      }
+	    citr++;
 	  }
-	float averageDensity = (float) totalDensity / (voxelRadius * voxelRadius * voxelRadius); // Dimensions multiplied then squared to account for multi-directional forward/backward accumulation of densities
-	// averageDensity = abs(averageDensity);
-	cout << "Average Density: " << averageDensity << endl << endl;
-  if(averageDensity > meanDensity)
-    {
-      cout << "Well, it looks like " << averageDensity << " is greater than " << meanDensity << ", so it seems we can determine precise termination is here at Coordinate " << j << endl;
-      filaments[1].erase(citr, filaments[1].end());
-      cout << "Final marking point of this filament: Marker (" << j << "): " << (*citr);
-      break;
-    }
-  citr++;
- }
+	cin.get();
+	fitr++;
+      }
 	/**	
    	int numCoords = seeds.size();
 	for(int i = 0; i < numCoords - 1; i++)
