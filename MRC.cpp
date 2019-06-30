@@ -1,5 +1,5 @@
 /**
- * UPDATE: Update filament cube minor average density calculator to skip the first coordinate pair (0,1) for all filaments, as very few of said regions have density > globalAverage.
+ * update: update filament cube minor average density calculator to skip the first coordinate pair (0,1) for all filaments, as very few of said regions have density > globalAverage.
  *
  */
 #include <iostream>
@@ -783,10 +783,126 @@ void MRC::convertCoordinatesToIndices(vector<Coordinate> seeds)
     }
 }
 
+void MRC::loadFilaments(vector<vector<Coordinate>> & filaments)
+{
+  int i = 0;
+  for(vector<vector<Coordinate>>::iterator fitr = filaments.begin(); fitr != filaments.end(); fitr++)
+    {
+      string filamentName = "/home/jhessefo/git/MRC/Chimera_MRC_Filament_Tracer/Output/finals_filament_smoothed/filament_smoothed_" + to_string(i) + ".cmm";
+      this->readCoordinateFromCMMFile(filaments.at(i), filamentName);
+
+      cout << endl << "Grabbing coordinates of filament " << i << "..." << endl;
+      for(vector<Coordinate>::iterator citr = filaments[i].begin(); citr != filaments[i].end(); citr++)
+	{
+	  // Iterate through each filament in filaments and print coordinate of the filament
+	  cout << (*citr);
+	}
+      i++;
+    }
+}
+
+void MRC::pruneFilamentsByDensity(vector<vector<Coordinate>> & filaments, double meanCubeDensity)
+{
+  ofstream outFile;
+  outFile.open("filaments_density_pruned.dat");
+  for(vector<vector<Coordinate>>::iterator fitr = filaments.begin(); fitr != filaments.end(); fitr++)
+    {
+      int numCoords = (*fitr).size();
+      vector<Coordinate>::iterator citr = (*fitr).begin();
+      
+      for(int j = 1; j < numCoords - 1; j++)
+	{
+	  cout << "Coordinate " << j << ": " << (*fitr).at(j)
+	       << "Coordinate " << j+1 << ": " << (*fitr).at(j+1);
+	  outFile << "Coordinate " << j << ": " << (*fitr).at(j)
+		  << "Coordinate " << j+1 << ": " << (*fitr).at(j+1);
+	  float filamentDistance = calculateDistance((*fitr).at(j), (*fitr).at(j+1));
+	  float densityRadius = filamentDistance / 2;
+	  int voxelRadius = this->convertAngstromsToVoxels(densityRadius);
+	  cout << "Distance between coordinates " << j << " and " << j+1  << ": " << filamentDistance << endl
+	       << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
+	       << "Voxel Radius Equivalent: " << voxelRadius << endl;
+	  outFile << "Distance between coordinates " << j << " and " << j+1 << ": " << filamentDistance << endl
+		  << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
+		  << "Voxel Radius Equivalent: " << voxelRadius << endl;
+	  
+	  Index testIndex;
+	  this->getIndexFromCoordinate((float)(*fitr).at(j).xCor, (*fitr).at(j).yCor, (float)(*fitr).at(j).zCor, testIndex);
+	  cout << "Corresponding Cube Indices: " << testIndex;
+	  outFile << "Corresponding Cube Indices: " << testIndex;
+	  double totalDensity = 0;
+	  for(int z = 0; z < voxelRadius; z++)
+	    {
+	      for(int y = 0; y < voxelRadius; y++)
+		{
+		  for(int x = 0; x < voxelRadius; x++)
+		    {
+		      // Traverse "forward" through the cube minor region and add density values as accessed.
+		      if(testIndex.xIndex + x < this->nx && testIndex.yIndex + y < this->ny && testIndex.zIndex + z < this->nz)
+			{
+			  totalDensity += this->cube[testIndex.xIndex + x][testIndex.yIndex + y][testIndex.zIndex + z];
+			  // cout << "totalDensity = " << totalDensity << endl;
+			}
+		      // Traverse "backward" through the cube minor region and add density values as accessed.
+		      if(testIndex.xIndex - x > 0 && testIndex.yIndex - y > 0 && testIndex.zIndex - z > 0)
+			{
+			  totalDensity += this->cube[testIndex.xIndex - x][testIndex.yIndex - y][testIndex.zIndex - z];
+			}
+		    }
+		}
+	    }
+	  float averageDensity = 0;
+	  if(8 * voxelRadius * voxelRadius * voxelRadius  > 0)
+	    averageDensity = abs((float) totalDensity / (8 * voxelRadius * voxelRadius * voxelRadius)); // Dimensions multiplied then squared to account for multi-directional forward/backward accumulation of densities
+	  cout << "Average Density: " << averageDensity << endl << endl;
+	  if(averageDensity < meanCubeDensity)
+	    {
+	      cout << "Cube Minor Termination Point: Coordinate " << j << endl;
+	      outFile << "Cube Minor Termination Point: Coordinate " << j << endl;
+	      (*fitr).erase(citr, (*fitr).end());
+	      break;
+	    }
+	  citr++;
+	  // cout << "\n";
+	}
+      cout << "\n";
+      // cin.get();
+    }
+  outFile.close();
+  
+  /**
+   * Iterate through a collection of filaments, and for each filament, create a new .cmm file.
+   * Store within the file the coordinate data pertaining to the current filament.
+   */
+  int i = 0;
+  for(vector<vector<Coordinate>>::iterator fitr = filaments.begin(); fitr != filaments.end(); fitr++)
+    {
+      int j = 0;
+      int numCoordinates = (*fitr).size();
+      string filamentFilename = "Output/filaments_density_pruned/filament_density_pruned_" + to_string(i) + ".cmm";
+      outFile.open(filamentFilename.c_str());
+      outFile << "<marker_set name=\"" << filamentFilename << "\">" << endl;
+      for(vector<Coordinate>::iterator citr = (*fitr).begin(); citr != (*fitr).end(); citr++)
+	{
+	  outFile << "<marker id=\"" << j << "\" x=\"" << (*citr).xCor << "\" y=\"" << (*citr).yCor << "\" z=\"" << (*citr).zCor << "\" r=\"0.25\" g=\"0.25\" b=\"1\" radius=\"30\"/>" << endl;
+	  if(j < numCoordinates - 1)
+	    {
+	      outFile << "<link id1=\"" << j << "\" id2=\"" << j+1 << "\" r=\"0.25\" g=\"0.25\" b=\"1\" radius=\"30\"/>" << endl;
+	    }
+	  j++;
+	}
+      
+      i++;
+      outFile << "</marker_set>" << endl;
+      outFile.close();
+    }
+}
+
 int main(int argc, char** argv)
 {
     string inputMrcFilePath = (std::string)argv[1];
     string inputCmmFilePath = (std::string)argv[2];
+    //ofstream outFile;
     vector<Coordinate> seeds;
     MRC mrc;
     
@@ -794,194 +910,17 @@ int main(int argc, char** argv)
     mrc.readMRCandSeeds(inputMrcFilePath, inputCmmFilePath, seeds);
 
     // Practice with reading of, access of, printing of, and conversion of voxel values to angstrom units along each axis.
-    mrc.printVoxelSize();
     float voxelSize = mrc.getVoxelSize();
-
-    // Convert seed Coordinate values to corresponding Index values and print results.
-    // mrc.convertCoordinatesToIndices(seeds);
-    
-    /**
-    string filamentExample;
-    cout << "Enter example filament name: ";
-    cin >> filamentExample;
-    cout << endl;
-    
-    mrc.readCoordinateFromCMMFile(filament, filamentExample);
-    int c = 0;
-    for(vector<Coordinate>::iterator fitr = filament.begin(); fitr != filament.end(); fitr++)
-    {
-        cout << (*fitr);
-        c++;
-    }
-    */
-
+    mrc.printVoxelSize();
+  
     // Load all existing filaments into vector collection for pruning of unnecessary coordinates
     vector<Coordinate> filament;
     vector<vector<Coordinate>> filaments(seeds.size()); // One filament per starting seed point, so filaments gets size seeds.size()
-    int i = 0;
-    for(vector<vector<Coordinate>>::iterator fitr = filaments.begin(); fitr != filaments.end(); fitr++) 
-    {
-        string filamentName = "/home/jhessefo/git/MRC/Chimera_MRC_Filament_Tracer/Output/finals_filament_smoothed/filament_smoothed_" + to_string(i) + ".cmm";
-        mrc.readCoordinateFromCMMFile(filaments.at(i), filamentName);
-        
-        cout << endl << "Grabbing coordinates of filament " << i << "..." << endl;
-        for(vector<Coordinate>::iterator citr = filaments[i].begin(); citr != filaments[i].end(); citr++) // iterate through each filament in filaments and print coordinate of the filament
-        	cout << (*citr);
-    	i++;
-    }
-  
+    mrc.loadFilaments(filaments);
+
     // Test: Measure average density along a single filament within voxel radius and with each measure check to see if average density has dropped below mean
     double meanDensity = mrc.meanDensity();
-    vector<vector<Coordinate>>::iterator fitr = filaments.begin();
-    while(fitr != filaments.end())
-      {
-	int numCoords = (*fitr).size();
-	vector<Coordinate>::iterator citr = (*fitr).begin();
-	
-	for(int j = 0; j < numCoords - 1; j++)
-	  {
-	    cout << "Coordinate " << j << ": " << (*fitr).at(j)
-		 << "Coordinate " << j+1 << ": " << (*fitr).at(j+1);
-	    float filamentDistance = calculateDistance((*fitr).at(j), (*fitr).at(j+1));
-	    float densityRadius = filamentDistance / 2;
-	    int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
-	    cout << "Distance between coordinate " << j << " and coordinate " << j+1  << ": " << filamentDistance << endl
-		 << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
-		 << "Voxel Radius Equivalent: " << voxelRadius << endl;
-	    
-	    Index testIndex;
-	    mrc.getIndexFromCoordinate((float)(*fitr).at(j).xCor, (*fitr).at(j).yCor,(float)(*fitr).at(j).zCor, testIndex); 
-	    cout << "Corresponding Cube Indices: " << testIndex;
-	    double totalDensity = 0;
-	    for(int z = 0; z < voxelRadius; z++)
-	      {
-		for(int y = 0; y < voxelRadius; y++)
-		  {
-		    for(int x = 0; x < voxelRadius; x++)
-		      {
-			// Traverse "forward" through the cube minor region and add density values as accessed.
-			if(testIndex.xIndex + x < mrc.nx && testIndex.yIndex + y < mrc.ny && testIndex.zIndex + z < mrc.nz)
-			  {
-			    totalDensity += mrc.cube[testIndex.xIndex + x][testIndex.yIndex + y][testIndex.zIndex + z];
-			    // cout << "totalDensity = " << totalDensity << endl;
-			  }
-			// Traverse "backward" through the cube minor region and add density values as accessed.
-			if(testIndex.xIndex - x > 0 && testIndex.yIndex - y > 0 && testIndex.zIndex - z > 0)
-			  {
-			    totalDensity += mrc.cube[testIndex.xIndex - x][testIndex.yIndex - y][testIndex.zIndex - z];
-			  }
-			else
-			  {
-			    totalDensity *= 2;
-			  }
-			
-		      }
-		  }
-	      }
-	    float averageDensity = abs((float) totalDensity / (voxelRadius * voxelRadius * voxelRadius * voxelRadius)); // Dimensions multiplied then squared to account for multi-directional forward/backward accumulation of densities
-	    // averageDensity = abs(averageDensity);
-	    cout << "Average Density: " << averageDensity << endl << endl;
-	    if(averageDensity < meanDensity)
-	      {
-		cout << "Well, it looks like this cube minor's density, " << averageDensity << ", is less than the sum cube's mean density, " << meanDensity << ", so it seems we can determine precise termination is here at Coordinate " << j << endl;
-		(*fitr).erase(citr, (*fitr).end());
-		cout << "Final marking point of this filament: Marker (" << j << "): " << (*citr);
-		break;
-	      }
-	    citr++;
-	  }
-	cin.get();
-	fitr++;
-      }
-	/**	
-   	int numCoords = seeds.size();
-	for(int i = 0; i < numCoords - 1; i++)
-	{
-		float filamentDistance = calculateDistance(seeds.at(i), seeds.at(i+1));
-		float densityRadius = filamentDistance / 2;
-		int voxelRadius = mrc.convertAngstromsToVoxels(densityRadius);
-		cout << "Distance between coordinate " << i << " and coordinate " << i+1 << ": " << filamentDistance << endl
-			 << "Density Calculation Radius: " << densityRadius << " angstroms" << endl
-			 << "Voxel Radius Equivalent: " << voxelRadius << endl << endl;
-	}
-	*/
-
-    /**
-     * Thinking this through: What do I need to do from here?
-     * First, what can I do already?
-     * - Access density values at any point and index on cube
-     * - Convert coordinate values to cube index equivalents
-     * - Read filament data from marker cmm file
-     * - Calculate the distance between two coordinates, derive desired radius value from this, and convert the radius distance in angstroms to the voxel equivalent integer
-     * Second, what do I do from here?
-     * - Use voxel radius equivalent as number of indices to move in all dimensions, x, y, and z, in order to create a "cube minor" from which to take the average of all densities in the radius
-     * - Take average density of entire cube and use as minimal boundary value for the average densities of cube minors
-     * - If average cube minor density < boundary -> set marker at current coordinate value to determine terminal point of current filament, and begin examination of following filament
-     * - Read filaments from output folder by incrementing integer to append to file name string before opening filament file of current loop iteration
-     * - Vector of vectors of coordinates to represent all traced filaments? vector<vector<Coordinate>> 
-     */
+    mrc.pruneFilamentsByDensity(filaments, meanDensity);
 
     return 0;
 }
-
-/**
-#pragma mark - ReadNTrace Filament
-void MRC::readSeedPointsNTraceFilaments(string seedPointsFilename)
-{
-    vector<Coordinate> seedpoints;
-
-    readCoordinateFromCMMFile(seedpoints, seedPointsFilename);
-    sort(seedpoints.begin(), seedpoints.end(), sortBasedOnZCoord);
-
-    numberOfFilament =   (int)seedpoints.size();
-
-    int firstOnZ = 0;
-    int lastOnZ;
-
-    cout<<"Sorting Seed Points...."<<endl;
-    cout<<"-------------------------------------------"<<endl;
-    isFirstFilemantOnPlane[0] = true;
-    for (int i = 1; i < numberOfFilament; i++) {
-        isFirstFilemantOnPlane[i] = false;
-        if (fabs(seedpoints.at(i).zCor -  seedpoints.at(i - 1).zCor) > getApixZ() * 8){
-            lastOnZ = i - 1;
-            cout<<"Seed Plane: "<<firstOnZ<< " " <<lastOnZ << endl;
-            sort(seedpoints.begin() + firstOnZ, seedpoints.begin() + lastOnZ + 1, sortBasedOnXCoord);
-            firstOnZ = i;
-            isFirstFilemantOnPlane[i] = true;
-        }
-    }
-
-    sort(seedpoints.begin() + firstOnZ, seedpoints.begin() + numberOfFilament, sortBasedOnXCoord);
-
-     if (filamentDirection == Ascending) {
-         mrcEndY =  ny - 1;//2000;
-     }
-     else {
-         mrcEndY = 1;//  90;
-     }
-    cout<<"-------------------------------------------"<<endl;
-
-    cout<<"\nTracing start........."<<endl;
-    cout<<"Phase 1: tracing using only density"<<endl;
-
-    traceFilamentsWithStepSize(seedpoints, 2);
-    int overlappingSegments2 = getNumberOfOverlappingSegments();
-    //printf("Overlapping Segments for shift of 2: %d\n", overlappingSegments2);
-  // readAndCalculateAccuracy();
-
-    traceFilamentsWithStepSize(seedpoints, 3);
-    int overlappingSegments3 = getNumberOfOverlappingSegments();
-   // printf("Overlapping Segments forshift of 3: %d\n", overlappingSegments3);
-  //  readAndCalculateAccuracy();
-
-    if (overlappingSegments2 < overlappingSegments3) {
-       // printf("Selecting Best x shift");
-        traceFilamentsWithStepSize(seedpoints, 2);
-    }
-
-
-   // readAndCalculateAccuracy();
-    cout<<"Phase-1 completed"<<endl<<endl;
-}
-**/

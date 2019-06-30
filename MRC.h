@@ -165,7 +165,9 @@ public:
     
     
     void readMRCFile(string inputMRCFile);//read density map by EMan formate
-    void writeDataInMRCFormat(string outputMRCFile);
+  void loadFilaments(vector<vector<Coordinate>> &  filaments);
+  void pruneFilamentsByDensity(vector<vector<Coordinate>> & filaments, double meanCubeDensity);
+  void writeDataInMRCFormat(string outputMRCFile);
     void showMRCFileDescription();
     float minDensity();
     float maxDensity();
