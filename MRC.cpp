@@ -1,7 +1,3 @@
-/**
- * update: update filament cube minor average density calculator to skip the first coordinate pair (0,1) for all filaments, as very few of said regions have density > globalAverage.
- *
- */
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -783,12 +779,12 @@ void MRC::convertCoordinatesToIndices(vector<Coordinate> seeds)
     }
 }
 
-void MRC::loadFilaments(vector<vector<Coordinate>> & filaments)
+void MRC::loadFilaments(vector<vector<Coordinate>> & filaments, string outputSmoothedPath)
 {
   int i = 0;
   for(vector<vector<Coordinate>>::iterator fitr = filaments.begin(); fitr != filaments.end(); fitr++)
-    {
-      string filamentName = "/home/jhessefo/git/MRC/Chimera_MRC_Filament_Tracer/Output/finals_filament_smoothed/filament_smoothed_" + to_string(i) + ".cmm";
+    {      
+      string filamentName = outputSmoothedPath + "filament_smoothed_" + to_string(i) + ".cmm";
       this->readCoordinateFromCMMFile(filaments.at(i), filamentName);
 
       cout << endl << "Grabbing coordinates of filament " << i << "..." << endl;
@@ -801,7 +797,7 @@ void MRC::loadFilaments(vector<vector<Coordinate>> & filaments)
     }
 }
 
-void MRC::pruneFilamentsByDensity(vector<vector<Coordinate>> & filaments, double meanCubeDensity)
+void MRC::pruneFilamentsByDensity(vector<vector<Coordinate>> & filaments, double meanCubeDensity, string outputPrunedPath)
 {
   ofstream outFile;
   outFile.open("filaments_density_pruned.dat");
@@ -879,7 +875,7 @@ void MRC::pruneFilamentsByDensity(vector<vector<Coordinate>> & filaments, double
     {
       int j = 0;
       int numCoordinates = (*fitr).size();
-      string filamentFilename = "Output/filaments_density_pruned/filament_density_pruned_" + to_string(i) + ".cmm";
+      string filamentFilename = outputPrunedPath + "filament_density_pruned_" + to_string(i) + ".cmm";
       outFile.open(filamentFilename.c_str());
       outFile << "<marker_set name=\"" << filamentFilename << "\">" << endl;
       for(vector<Coordinate>::iterator citr = (*fitr).begin(); citr != (*fitr).end(); citr++)
@@ -902,6 +898,8 @@ int main(int argc, char** argv)
 {
     string inputMrcFilePath = (std::string)argv[1];
     string inputCmmFilePath = (std::string)argv[2];
+    string outputSmoothedPath = (std::string)argv[3];
+    string outputPrunedPath   = (std::string)argv[4];
     //ofstream outFile;
     vector<Coordinate> seeds;
     MRC mrc;
@@ -916,11 +914,11 @@ int main(int argc, char** argv)
     // Load all existing filaments into vector collection for pruning of unnecessary coordinates
     vector<Coordinate> filament;
     vector<vector<Coordinate>> filaments(seeds.size()); // One filament per starting seed point, so filaments gets size seeds.size()
-    mrc.loadFilaments(filaments);
+    mrc.loadFilaments(filaments, outputSmoothedPath);
 
     // Test: Measure average density along a single filament within voxel radius and with each measure check to see if average density has dropped below mean
     double meanDensity = mrc.meanDensity();
-    mrc.pruneFilamentsByDensity(filaments, meanDensity);
+    mrc.pruneFilamentsByDensity(filaments, meanDensity, outputPrunedPath);
 
     return 0;
 }
